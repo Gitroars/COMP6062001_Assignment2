@@ -1,16 +1,32 @@
-# This is a sample Python script.
+import re
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# Define regular expressions for each lexical unit
+regex_patterns = {
+    'assign': r':=',
+    'plus': r'\+',
+    'minus': r'-',
+    'times': r'\*',
+    'div': r'/',
+    'lparen': r'\(',
+    'rparen': r'\)',
+    'id': r'[a-zA-Z][a-zA-Z0-9]*',
+    'number': r'\d+(\.\d+)?',
+    'comment': r'/\*(.|\n)*?\*/|//.*'
+}
+
+# Combine the regular expressions into a single pattern
+regex_pattern = '|'.join('(?P<%s>%s)' % pair for pair in regex_patterns.items())
+
+# Tokenize the input expression using the scanner
+def tokenize(expression):
+    tokens = []
+    for match in re.finditer(regex_pattern, expression):
+        token_type = match.lastgroup
+        token_value = match.group(token_type)
+        if token_type != 'COMMENT':
+            tokens.append((token_type, token_value))
+    return tokens
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+user_input = input()
+print(tokenize(user_input))
