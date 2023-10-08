@@ -43,13 +43,12 @@ regex_patterns = {
     'plus': r'\+',
     'minus': r'-',
     'times': r'\*',
-    'div': r'/',
+    'div': r'/(?!(/|\*))',
     'lparen': r'\(',
     'rparen': r'\)',
     'id': r'[a-zA-Z][a-zA-Z0-9]*',
     'number': r'\d+\.\d+|\d*\.\d+|\d+\.\d*|\d+',
-    # 'comment': r'\/\*([^*]|(\*+[^*\/]))*\*+\/|\/\/[^\n]*',
-    'comment': r'\/\*[\s\S]*?\*\/|\/\/[^\n]*',
+    'comment': r'(\/\/[^\n]*|\/\*[\s\S]*?\*\/)',
 }
 
 # Combine the regular expressions into a single pattern
@@ -58,18 +57,15 @@ regex_pattern = '|'.join('(?P<%s>%s)' % pair for pair in regex_patterns.items())
 # Tokenize the input expression using the scanner
 def tokenize(expression):
     tokens = []
-    for match in re.finditer(regex_pattern, expression):
+
+    for match in re.finditer(regex_pattern, expression, re.MULTILINE | re.DOTALL):
         token_type = match.lastgroup
         token_value = match.group(token_type)
-        if token_type != 'COMMENT':
-            tokens.append((token_type, token_value))
-    for token_type, token_value in tokens:
-        print('\n'.join([f'{token_type}: {token_value}']))
+        tokens.append((token_type, token_value))
 
-    # Print comments separately
-    comments = re.findall(regex_patterns['comment'], expression)
-    for comment in comments:
-        print(f'comment: {comment}')
+    # Print tokens
+    for token_type, token_value in tokens:
+        print(f'{token_type}: {token_value}')
 
 # Test the scanner
 user_input = ""
@@ -79,3 +75,4 @@ while True:
         break
     user_input += line + "\n"
 tokenize(user_input)
+
