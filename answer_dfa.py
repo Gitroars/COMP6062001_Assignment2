@@ -133,8 +133,9 @@ def validate(input_string):
         return False
 
 
-input_string = "x := 42 / 7 + 3.14 * (y + z)"
-if validate(input_string):
-    print("String is valid and ends in a valid state.")
-else:
-    print("String is not valid or does not end in a valid state.")
+input_string = "Celcius := 100.00"
+second_input_string = "Fahrenheit := (9/5)*Celcius + 32"
+comment_input_string = "//this is a comment"
+print(validate(input_string))
+print(validate(second_input_string))
+print(validate(comment_input_string))
