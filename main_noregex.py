@@ -22,6 +22,21 @@ times: *
 id: Celcius
 plus: +
 number: 32
+
+Test 1: can the scanner read in input file? (5)
+Test 2: Can the scanner identify the 'words' of calculator? (85)
+    1) valid operator
+    2) invalid operator
+    3) valid parenthesis
+    4) invalid parenthesis
+    5) valid id
+    6) invalid id
+    7) valid number
+    8) invalid number
+    9) valid comment
+    10) invalid comment
+Test 3: can the scanner identify an error (invalid) string? (5)
+Test 4: can the scanner identify an error (invalid) string on what LINE and what COLUMN? (5)
 """
 
 # assign: :=
@@ -150,8 +165,15 @@ class Lexer:
         return Token("EOF")
 
 # Test the lexer with an input string
-input_string = "Fahrenheit := (9/5)*Celcius + 32"
-lexer = Lexer(input_string)
+user_input = ""
+while True:
+    line = input("Input text (press Enter ONLY to finish): ")
+    if line == "":
+        break
+    user_input += line + "\n"
+
+lexer = Lexer(user_input)
+
 while True:
     token = lexer.get_next_token()
     if token.type == "EOF":
