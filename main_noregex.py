@@ -35,52 +35,128 @@ number: 32
 # number: digit digit * | digit * ( . digit | digit . ) digit *
 # comment: /* ( non-* | * non-/ )* */ | //(non-newline)* newline
 
-import re
+class Token:
+    def __init__(self, type, value=None):
+        self.type = type
+        self.value = value
 
-# Define a list of token types and their corresponding patterns
-token_patterns = [
-    ('assign', ':='),
-    ('plus', '\+'),
-    ('minus', '-'),
-    ('times', '\*'),
-    ('div', '/'),
-    ('lparen', '\('),
-    ('rparen', '\)'),
-    ('id', '[a-zA-Z][a-zA-Z0-9]*'),
-    ('number', '\d+\.\d+|\d*\.\d+|\d+\.\d*|\d+'),
-    ('comment', r'\/\/[^\n]*|\/\*[\s\S]*?\*\/'),
-]
+class Lexer:
+    def __init__(self, text):
+        self.text = text
+        self.pos = 0
+        self.current_char = self.text[self.pos]
 
-# Tokenize the input expression using the defined patterns
-def tokenize(expression):
-    tokens = []
-    while expression:
-        found = False
-        for token_type, pattern in token_patterns:
-            match = expression.lstrip().find(pattern)
-            if match == 0:
-                token_value = expression[:len(pattern)].strip()
-                if token_type != 'comment':
-                    tokens.append((token_type, token_value))
-                expression = expression[len(pattern):]
-                found = True
-                break
-        if not found:
-            raise ValueError(f"Invalid token in expression: {expression}")
+    def error(self):
+        raise Exception(f"Invalid character: {self.current_char}")
 
-# Test the scanner
-user_input = ""
+    def advance(self):
+        self.pos += 1
+        if self.pos < len(self.text):
+            self.current_char = self.text[self.pos]
+        else:
+            self.current_char = None
+
+    def skip_whitespace(self):
+        while self.current_char is not None and self.current_char.isspace():
+            self.advance()
+
+    def is_identifier(self, char):
+        return char.isalnum() or char == '_'
+
+    def number(self):
+        result = ""
+        while self.current_char is not None and (self.current_char.isdigit() or self.current_char == '.'):
+            result += self.current_char
+            self.advance()
+        return result
+
+    def identifier(self):
+        result = ""
+        while self.current_char is not None and self.is_identifier(self.current_char):
+            result += self.current_char
+            self.advance()
+        return result
+
+    def get_next_token(self):
+        while self.current_char is not None:
+            if self.current_char.isspace():
+                self.skip_whitespace()
+                continue
+
+            if self.current_char.isdigit() or self.current_char == '.':
+                return Token("number", self.number())
+
+            if self.is_identifier(self.current_char):
+                return Token("id", self.identifier())
+
+            if self.current_char == '+':
+                char = self.current_char
+                self.advance()
+                return Token("plus", char)
+
+            if self.current_char == '-':
+                char = self.current_char
+                self.advance()
+                return Token("minus", char)
+
+            if self.current_char == '*':
+                char = self.current_char
+                self.advance()
+                return Token("times", char)
+
+            if self.current_char == '/':
+                if self.text[self.pos + 1] == '/':
+                    # Handle single-line comment
+                    comment = ""
+                    while self.current_char is not None and self.current_char != '\n':
+                        comment += self.current_char
+                        self.advance()
+                    return Token("COMMENT", comment.strip())
+                elif self.text[self.pos + 1] == '*':
+                    # Handle multi-line comment
+                    comment = ""
+                    self.advance()  # Skip the '/'
+                    self.advance()  # Skip the '*'
+                    while self.current_char is not None and not (self.current_char == '*' and self.text[self.pos + 1] == '/'):
+                        comment += self.current_char
+                        self.advance()
+                    if self.current_char is not None:
+                        self.advance()  # Skip the '*'
+                        self.advance()  # Skip the '/'
+                    return Token("COMMENT", comment.strip())
+                else:
+                    char = self.current_char
+                    self.advance()
+                    return Token("divide", char)
+
+            if self.current_char == ':':
+                if self.text[self.pos + 1] == '=':
+                    self.advance()
+                    self.advance()
+                    return Token("assign", ":=")
+
+            if self.current_char == '(':
+                char = self.current_char
+                self.advance()
+                return Token("lparen", char)
+
+            if self.current_char == ')':
+                char = self.current_char
+                self.advance()
+                return Token("rparen", char)
+
+            self.error()
+
+        return Token("EOF")
+
+# Test the lexer with an input string
+input_string = "Fahrenheit := (9/5)*Celcius + 32"
+lexer = Lexer(input_string)
 while True:
-    line = input("Input text (press Enter ONLY to finish): ")
-    if line == "":
+    token = lexer.get_next_token()
+    if token.type == "EOF":
         break
-    user_input += line + "\n"
-tokenize(user_input)
-
-# Test the scanner using required texts
-# text = "Celcius := 100.00"
-# text0 = "Fahrenheit := (9/5)*Celcius + 32"
-# text1 = "Hello world (input 200.50) /* Comment */"
-# tokenize(text)
-# tokenize(text0)
-# tokenize(text1)
+    if token.type == "COMMENT":
+        print(f"Comment: {token.value}")
+    else:
+        print(f'{token.type}: {token.value}')
